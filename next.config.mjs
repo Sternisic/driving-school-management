@@ -1,4 +1,13 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+import path from 'path';
+
+const nextConfig = {
+  experimental: {
+    appDir: true, // Nutze den neuen App Router
+  },
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve('src');
+    return config;
+  },
+};
 
 export default nextConfig;

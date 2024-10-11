@@ -34,3 +34,47 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Structure
+
+src/
+├── app/
+│   ├── (dashboard)/
+│   │   ├── layout.tsx         
+│   │   ├── page.tsx            
+│   │   ├── students/
+│   │   │   ├── page.tsx        
+│   │   │   └── [id]/
+│   │   │       └── page.tsx    
+│   │   ├── instructors/
+│   │   │   ├── page.tsx        
+│   │   └── cars/
+│   │       ├── page.tsx       
+│   ├── (bookings)/
+│   │   ├── layout.tsx         
+│   │   ├── page.tsx            
+│   └── api/
+│       ├── students/          
+│       │   ├── route.ts        
+│       ├── instructors/        
+│       │   ├── route.ts        
+│       ├── cars/               
+│       │   ├── route.ts        
+│       └── bookings/           
+│           ├── route.ts        
+├── components/
+│   ├── StudentForm.tsx         
+│   ├── InstructorForm.tsx     
+│   ├── CarForm.tsx          
+│   ├── BookingCalendar.tsx   
+│   └── Navbar.tsx          
+├── services/
+│   ├── api.ts              
+│   ├── studentService.ts   
+│   ├── instructorService.ts   
+│   ├── carService.ts      
+│   └── bookingService.ts   
+└── styles/
+    └── globals.css      
+
+    
