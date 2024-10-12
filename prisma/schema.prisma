@@ -1,0 +1,43 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Student {
+  id           Int      @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String
+  gearType     String
+  address      String
+  lessons      Int
+  specialTrips Json
+}
+
+model Instructor {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  phone     String
+  // Optional: Weitere Felder für Fahrlehrer könnten hier hinzugefügt werden
+}
+
+model Car {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  licensePlate String
+  gearType     String  // Schaltgetriebe oder Automatik
+}
+
+
+enum SpecialTrips {
+  LANDSTRASSE
+  AUTOBAHN
+  DAEMMERUNG
+}

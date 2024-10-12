@@ -1,19 +1,41 @@
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-// Dummy-Daten für Fahrschüler
-let students = [
-    { id: 1, name: 'Max Mustermann', email: 'max@example.com' },
-    { id: 2, name: 'Erika Mustermann', email: 'erika@example.com' },
-];
+const prisma = new PrismaClient();
 
-// GET: Alle Fahrschüler abrufen
+// GET: Einzelnen Schüler abrufen
 export async function GET() {
-    return NextResponse.json(students);
-}
+    try {
+      const students = await prisma.student.findMany(); // Alle Schüler abrufen
+      return NextResponse.json(students);
+    } catch (error) {
+      console.error("Fehler beim Abrufen der Schüler:", error);
+      return NextResponse.json({ error: "Fehler beim Abrufen der Schüler" }, { status: 500 });
+    }
+  }
 
-// POST: Einen neuen Fahrschüler erstellen
-export async function POST(request: Request) {
-    const body = await request.json();
-    students.push({ id: students.length + 1, ...body });
-    return NextResponse.json({ message: 'Fahrschüler hinzugefügt', student: body });
-}
+
+// POST: Schüler hinzufügen
+  export async function POST(req: Request) {
+    try {
+      const data = await req.json(); // Schülerdaten aus dem Request-Body
+      const newStudent = await prisma.student.create({
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          email: data.email,
+          gearType: data.gearType,
+          address: data.address,
+          lessons: data.lessons,
+          specialTrips: data.specialTrips,
+        },
+      });
+      return NextResponse.json(newStudent);
+    } catch (error) {
+      console.error('Fehler beim Hinzufügen eines Schülers:', error);
+      return NextResponse.json({ error: 'Fehler beim Hinzufügen eines Schülers' }, { status: 500 });
+    }
+  }
+  
+
