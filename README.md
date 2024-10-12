@@ -89,12 +89,15 @@ src/
 git clone https://github.com/your-username/driving-school-management.git
 cd driving-school-management
 Step 2: Install Dependencies
+```bash
 npm install
+```
 Step 3: Database Setup
 Option 1: Using Script (Recommended)
 This project includes a script that automatically sets up the PostgreSQL database and runs Prisma migrations. You can execute the script with:
-
+```bash
 npm run setup
+```
 This command will:
 
 ## Create the PostgreSQL database.
@@ -107,9 +110,13 @@ Create a PostgreSQL database manually.
 Update the .env file with your database connection string:
 DATABASE_URL="postgresql://user:password@localhost:5432/driving_school_db"
 Run the following command to apply the database schema:
+```bash
 npx prisma migrate dev --name init
+```
 Step 4: Start the Development Server
+```bash
 npm run dev
+```
 Your development server should now be running at http://localhost:3000.
 
 ## Usage
@@ -120,17 +127,23 @@ Database Management
 This system uses Prisma to manage the PostgreSQL database. Below are some useful commands:
 
 Run migrations:
+```bash
 npx prisma migrate dev --name <migration-name>
+```
 Open Prisma Studio to manage the database visually:
+```bash
 npx prisma studio
-Error Handling
+```
+
+## Error Handling
 Database Connection Issues
 If you encounter connection issues, ensure that the DATABASE_URL is correct in your .env file and that PostgreSQL is running.
 
 ## Prisma Migrations
 If you experience migration issues, delete the prisma/migrations directory and re-run the migrations:
-
+```bash
 npx prisma migrate dev --name init
+```
 
 ## License
 This project is licensed under the MIT License.
