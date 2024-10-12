@@ -17,7 +17,7 @@ This project is a management system for driving schools, allowing for the manage
 - **Booking System:** Manage driving lessons and special trips (e.g., highway, country road).
 
 ## Project Structure
-
+```bash
 src/
 ├── app/
 │   ├── (dashboard)/
@@ -74,6 +74,7 @@ src/
 │   └── createDatabase.js            # Script for automatically creating the database
 ├── .env                             # Environment variables for database connection
 └── README.md                        # Project documentation and instructions
+```
 
 
 ## Installation
@@ -108,7 +109,9 @@ Make sure you have PostgreSQL installed and running. The database URL is configu
 Option 2: Manual Setup
 Create a PostgreSQL database manually.
 Update the .env file with your database connection string:
+```bash
 DATABASE_URL="postgresql://user:password@localhost:5432/driving_school_db"
+```
 Run the following command to apply the database schema:
 ```bash
 npx prisma migrate dev --name init
