@@ -1,80 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Driving School Management System
 
-## Getting Started
+This project is a management system for driving schools, allowing for the management of students, instructors, cars, and bookings. The system is built with Next.js, Prisma, and a PostgreSQL database.
 
-First, run the development server:
+## Technologies
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Frontend:** Next.js, TypeScript, Tailwind CSS
+- **Backend:** Prisma ORM, PostgreSQL
+- **Styling:** Tailwind CSS
+- **Database:** PostgreSQL
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Student Management:** Add, edit, and delete students with fields like first name, last name, phone number, email, address, manual/automatic gearbox, and driving lessons.
+- **Instructor Management:** Manage instructors with fields like first name, last name, and phone number.
+- **Car Management:** Add, edit, and delete cars with fields like brand, model, license plate, and gearbox type.
+- **Booking System:** Manage driving lessons and special trips (e.g., highway, country road).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Structure
+## Project Structure
 
 src/
 ├── app/
 │   ├── (dashboard)/
-│   │   ├── layout.tsx         
-│   │   ├── page.tsx            
+│   │   ├── layout.tsx               # Layout for the dashboard
+│   │   ├── page.tsx                 # Main dashboard page
 │   │   ├── students/
-│   │   │   ├── page.tsx        
-│   │   │   └── [id]/
-│   │   │       └── page.tsx    
+│   │   │   ├── page.tsx             # Students page
+│   │   │   └── [id]/                # Dynamic routes for individual student
+│   │   │       └── page.tsx         # Student details page (for edit/delete)
 │   │   ├── instructors/
-│   │   │   ├── page.tsx        
+│   │   │   ├── page.tsx             # Instructors page
+│   │   │   └── [id]/                # Dynamic routes for individual instructor
+│   │   │       └── page.tsx         # Instructor details page (for edit/delete)
 │   │   └── cars/
-│   │       ├── page.tsx       
-│   ├── (bookings)/
-│   │   ├── layout.tsx         
-│   │   ├── page.tsx            
+│   │       ├── page.tsx             # Cars page
+│   │       └── [id]/                # Dynamic routes for individual car
+│   │           └── page.tsx         # Car details page (for edit/delete)
 │   └── api/
-│       ├── students/          
-│       │   ├── route.ts        
-│       ├── instructors/        
-│       │   ├── route.ts        
-│       ├── cars/               
-│       │   ├── route.ts        
-│       └── bookings/           
-│           ├── route.ts        
+│       ├── students/                # API routes for students
+│       │   ├── route.ts             # GET/POST/DELETE/PUT for students
+│       │   └── [id]/                # API routes for individual student
+│       │       └── route.ts         # DELETE/PUT for a specific student
+│       ├── instructors/             # API routes for instructors
+│       │   ├── route.ts             # GET/POST/DELETE/PUT for instructors
+│       │   └── [id]/                # API routes for individual instructor
+│       │       └── route.ts         # DELETE/PUT for a specific instructor
+│       └── cars/                    # API routes for cars
+│           ├── route.ts             # GET/POST/DELETE/PUT for cars
+│           └── [id]/                # API routes for individual car
+│               └── route.ts         # DELETE/PUT for a specific car
 ├── components/
-│   ├── StudentForm.tsx         
-│   ├── InstructorForm.tsx     
-│   ├── CarForm.tsx          
-│   ├── BookingCalendar.tsx   
-│   └── Navbar.tsx          
+│   ├── StudentForm.tsx              # Form component for adding/editing a student
+│   ├── InstructorForm.tsx           # Form component for adding/editing an instructor
+│   ├── CarForm.tsx                  # Form component for adding/editing a car
+│   ├── Modal.tsx                    # Modal component for forms
+│   ├── StudentList.tsx              # Component displaying the list of students
+│   ├── InstructorList.tsx           # Component displaying the list of instructors
+│   ├── CarList.tsx                  # Component displaying the list of cars
+│   └── Navbar.tsx                   # Navigation bar component
 ├── services/
-│   ├── api.ts              
-│   ├── studentService.ts   
-│   ├── instructorService.ts   
-│   ├── carService.ts      
-│   └── bookingService.ts   
-└── styles/
-    └── globals.css      
+│   ├── api.ts                       # Common API utility functions
+│   ├── studentService.ts            # Service for interacting with the students API
+│   ├── instructorService.ts         # Service for interacting with the instructors API
+│   ├── carService.ts                # Service for interacting with the cars API
+├── types/
+│   ├── Student.ts                   # Type definitions for Student model
+│   ├── Instructor.ts                # Type definitions for Instructor model
+│   └── Car.ts                       # Type definitions for Car model
+├── prisma/
+│   ├── schema.prisma                # Prisma schema file defining the database models
+├── styles/
+│   └── globals.css                  # Global styles for Tailwind CSS
+├── scripts/
+│   └── createDatabase.js            # Script for automatically creating the database
+├── .env                             # Environment variables for database connection
+└── README.md                        # Project documentation and instructions
 
-    
+
+## Installation
+
+### Prerequisites
+
+- Node.js (Version 18 or higher)
+- PostgreSQL
+- Prisma CLI (installed automatically)
+
+### Step 1: Clone the Repository
+
+git clone https://github.com/your-username/driving-school-management.git
+cd driving-school-management
+Step 2: Install Dependencies
+npm install
+Step 3: Database Setup
+Option 1: Using Script (Recommended)
+This project includes a script that automatically sets up the PostgreSQL database and runs Prisma migrations. You can execute the script with:
+
+npm run setup
+This command will:
+
+## Create the PostgreSQL database.
+Run Prisma migrations to set up the database schema.
+Seed the database with initial data (if applicable).
+Make sure you have PostgreSQL installed and running. The database URL is configured in the .env file.
+
+Option 2: Manual Setup
+Create a PostgreSQL database manually.
+Update the .env file with your database connection string:
+DATABASE_URL="postgresql://user:password@localhost:5432/driving_school_db"
+Run the following command to apply the database schema:
+npx prisma migrate dev --name init
+Step 4: Start the Development Server
+npm run dev
+Your development server should now be running at http://localhost:3000.
+
+## Usage
+Add Students: Go to the dashboard, select "Students," and click "Add Student." Fill in the required fields and save.
+Manage Instructors: Go to the instructors section to add, edit, or delete instructors.
+Manage Cars: Go to the cars section to add, edit, or delete cars.
+Database Management
+This system uses Prisma to manage the PostgreSQL database. Below are some useful commands:
+
+Run migrations:
+npx prisma migrate dev --name <migration-name>
+Open Prisma Studio to manage the database visually:
+npx prisma studio
+Error Handling
+Database Connection Issues
+If you encounter connection issues, ensure that the DATABASE_URL is correct in your .env file and that PostgreSQL is running.
+
+## Prisma Migrations
+If you experience migration issues, delete the prisma/migrations directory and re-run the migrations:
+
+npx prisma migrate dev --name init
+
+## License
+This project is licensed under the MIT License.
