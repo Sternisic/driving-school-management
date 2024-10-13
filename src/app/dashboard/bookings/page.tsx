@@ -40,18 +40,20 @@ export default function BookingsPage() {
   // Beim ersten Laden der Seite Buchungen abrufen
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, []); // Leere Abhängigkeit, damit der Hook nur einmal ausgeführt wird
+  
 
   // Funktion zum Speichern von Buchungen (hinzufügen oder bearbeiten)
   const handleSaveBooking = async (booking: Booking) => {
     if (isEditing && booking.id) {
       await updateBooking(booking.id, booking);
     } else {
-      await addBooking(booking);
+      await addBooking(booking); // Achte darauf, dass dieser Aufruf nur einmal ausgeführt wird
     }
-    fetchBookings(); // Tabelle nach dem Speichern aktualisieren
+    fetchBookings(); // Daten nach dem Speichern aktualisieren
     setIsModalOpen(false); // Modal schließen
   };
+  
 
   // Funktion zum Bearbeiten einer Buchung
   const handleEditBooking = (booking: Booking) => {
@@ -108,7 +110,6 @@ export default function BookingsPage() {
         onDelete={handleDeleteBooking}
       />
 
-
       {/* Button zum Hinzufügen einer neuen Buchung */}
       <button
         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 fixed bottom-4 right-4 shadow-lg"
@@ -123,11 +124,7 @@ export default function BookingsPage() {
 
       {/* Modal für das Formular */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <BookingForm
-          booking={selectedBooking || {} as Booking} // Übergib eine leere Buchung, wenn nichts ausgewählt ist
-          onSave={handleSaveBooking}
-          onDelete={selectedBooking?.id ? handleDeleteBooking : undefined}
-        />
+          <BookingForm booking={selectedBooking as Booking} onSave={handleSaveBooking} onDelete={handleDeleteBooking} />
       </Modal>
     </div>
   );

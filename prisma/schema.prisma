@@ -8,7 +8,7 @@ generator client {
 }
 
 model Student {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   firstName    String
   lastName     String
   phone        String
@@ -17,22 +17,39 @@ model Student {
   address      String
   lessons      Int
   specialTrips Json
+  // Rückbeziehung zur Buchung
+  bookings     Booking[] // Ein Student kann mehrere Buchungen haben
 }
 
 model Instructor {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   firstName String
   lastName  String
   phone     String
-  // Optional: Weitere Felder für Fahrlehrer könnten hier hinzugefügt werden
+  // Rückbeziehung zur Buchung
+  bookings  Booking[] // Ein Instructor kann mehrere Buchungen haben
 }
 
 model Car {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   brand        String
   model        String
   licensePlate String
   gearType     String  // Schaltgetriebe oder Automatik
+  // Rückbeziehung zur Buchung
+  bookings     Booking[] // Ein Auto kann mehrere Buchungen haben
+}
+
+model Booking {
+  id           Int         @id @default(autoincrement())
+  start        DateTime
+  end          DateTime
+  student      Student     @relation(fields: [studentId], references: [id])
+  studentId    Int
+  instructor   Instructor  @relation(fields: [instructorId], references: [id])
+  instructorId Int
+  car          Car         @relation(fields: [carId], references: [id])
+  carId        Int
 }
 
 
