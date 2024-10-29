@@ -24,6 +24,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 }
 
+// PUT: Schüler aktualisieren
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const studentId = Number(params.id);
@@ -38,6 +39,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         email: data.email,
         gearType: data.gearType,
         address: data.address,
+        postalCode: data.postalCode, // Neue Felder
+        birthDate: new Date(data.birthDate), // Datum in Date-Objekt umwandeln
+        birthPlace: data.birthPlace,
+        nationality: data.nationality,
+        occupation: data.occupation,
         lessons: data.lessons,
         specialTrips: data.specialTrips,
       },

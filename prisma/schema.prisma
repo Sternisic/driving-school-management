@@ -7,19 +7,37 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Student {
-  id           Int       @id @default(autoincrement())
-  firstName    String
-  lastName     String
-  phone        String
-  email        String
-  gearType     String
-  address      String
-  lessons      Int
-  specialTrips Json
-  // Rückbeziehung zur Buchung
-  bookings     Booking[] // Ein Student kann mehrere Buchungen haben
+enum SpecialTrips {
+  LANDSTRASSE
+  AUTOBAHN
+  DAEMMERUNG
 }
+
+enum LessonType {
+  NORMAL
+  LANDSTRASSE
+  AUTOBAHN
+  DAEMMERUNG
+}
+
+model Student {
+  id              Int       @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  phone           String
+  email           String
+  gearType        String
+  address         String
+  postalCode      String?   // Vorübergehend optional
+  birthDate       DateTime? // Vorübergehend optional
+  birthPlace      String?   // Vorübergehend optional
+  nationality     String?   // Vorübergehend optional
+  occupation      String?   // Vorübergehend optional
+  lessons         Int       @default(0)  // Anzahl der normalen Fahrstunden
+  specialTrips    Json      @default("{}")  // Spezielle Fahrten (Landstraße, Autobahn, Dämmerung)
+  bookings        Booking[] // Ein Student kann mehrere Buchungen haben
+}
+
 
 model Instructor {
   id        Int       @id @default(autoincrement())
@@ -50,11 +68,7 @@ model Booking {
   instructorId Int
   car          Car         @relation(fields: [carId], references: [id])
   carId        Int
-}
-
-
-enum SpecialTrips {
-  LANDSTRASSE
-  AUTOBAHN
-  DAEMMERUNG
+  description  String?     // Optionales Feld für eine Beschreibung oder Notiz
+  lessonType   LessonType  // Art der Fahrstunde (Normal oder spezielle Fahrt)
+  paid         Boolean     @default(false) // Neues Feld für den Bezahlstatus
 }

@@ -6,6 +6,11 @@ export interface Student {
     email: string;
     gearType: string;
     address: string;
+    postalCode: string; // Postleitzahl
+    birthDate: string; // Geburtsdatum (ISO-Format: YYYY-MM-DD)
+    birthPlace: string; // Geburtsort
+    nationality: string; // Staatsangehörigkeit
+    occupation: string; // Beruf
     lessons: number;
     specialTrips: {
         landstrasse: boolean;

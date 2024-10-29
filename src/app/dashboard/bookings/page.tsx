@@ -2,34 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { Booking } from '@/types/Booking';
+import { Instructor } from '@/types/Instructor'; // Fahrlehrer-Typ importieren
+import { Student } from '@/types/Student'; // Fahrschüler-Typ importieren
 import { getBookings, addBooking, updateBooking, deleteBooking } from '@/services/bookingService'; // API-Funktionen
-import BookingList from '@/components/BookingList'; // Komponente für die Buchungsliste
-import BookingForm from '@/components/BookingForm'; // Komponente für das Buchungsformular
+import { getInstructors } from '@/services/instructorService'; // API für Fahrlehrer
+import { getStudents } from '@/services/studentService'; // API für Fahrschüler
+import CalendarView from '@/components/CalendarView';
+import BookingForm from '@/components/BookingForm';
 import Modal from '@/components/Modal'; // Modal-Komponente für das Formular
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { de } from 'date-fns/locale';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-
-// Lokalisierung für den Kalender mit date-fns
-const locales = {
-  'de': de,
-};
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // Woche beginnt am Montag
-  getDay,
-  locales,
-});
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [instructors, setInstructors] = useState<Instructor[]>([]); // Zustand für Fahrlehrer
+  const [students, setStudents] = useState<Student[]>([]); // Zustand für Fahrschüler
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Funktion zum Abrufen der Buchungen
   const fetchBookings = async () => {
@@ -37,23 +25,35 @@ export default function BookingsPage() {
     setBookings(bookingsData);
   };
 
-  // Beim ersten Laden der Seite Buchungen abrufen
+  // Funktion zum Abrufen der Fahrlehrer
+  const fetchInstructors = async () => {
+    const instructorsData = await getInstructors();
+    setInstructors(instructorsData);
+  };
+
+  // Funktion zum Abrufen der Fahrschüler
+  const fetchStudents = async () => {
+    const studentsData = await getStudents();
+    setStudents(studentsData);
+  };
+
+  // Daten beim ersten Laden abrufen
   useEffect(() => {
     fetchBookings();
-  }, []); // Leere Abhängigkeit, damit der Hook nur einmal ausgeführt wird
-  
+    fetchInstructors(); // Fahrlehrer abrufen
+    fetchStudents(); // Fahrschüler abrufen
+  }, []);
 
   // Funktion zum Speichern von Buchungen (hinzufügen oder bearbeiten)
   const handleSaveBooking = async (booking: Booking) => {
     if (isEditing && booking.id) {
       await updateBooking(booking.id, booking);
     } else {
-      await addBooking(booking); // Achte darauf, dass dieser Aufruf nur einmal ausgeführt wird
+      await addBooking(booking);
     }
-    fetchBookings(); // Daten nach dem Speichern aktualisieren
+    fetchBookings(); // Tabelle und Kalender nach dem Speichern aktualisieren
     setIsModalOpen(false); // Modal schließen
   };
-  
 
   // Funktion zum Bearbeiten einer Buchung
   const handleEditBooking = (booking: Booking) => {
@@ -70,45 +70,14 @@ export default function BookingsPage() {
     }
   };
 
-  // Buchungen für den Kalender vorbereiten
-  const events = bookings.map((booking) => ({
-    id: booking.id,
-    title: `${booking.student?.firstName} ${booking.student?.lastName} - ${booking.instructor?.firstName} ${booking.instructor?.lastName}`,
-    start: new Date(booking.start),
-    end: new Date(booking.end),
-  }));
-
   return (
     <div className="relative min-h-screen">
       <h1 className="text-3xl font-bold text-black mb-6">Buchungen</h1>
 
       {/* Kalender-Komponente */}
       <div className="mb-6">
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 500 }}
-          selectable
-          onSelectSlot={(slotInfo) => {
-            setSelectedDate(slotInfo.start);
-            setIsEditing(false);
-            setIsModalOpen(true); // Modal für neue Buchung öffnen
-          }}
-          onSelectEvent={(event) => {
-            const booking = bookings.find(b => b.id === event.id);
-            if (booking) handleEditBooking(booking);
-          }}
-        />
+        <CalendarView bookings={bookings} fetchBookings={fetchBookings} instructors={instructors} students={students} />
       </div>
-
-      {/* Buchungsliste */}
-      <BookingList
-        bookings={bookings}
-        onEdit={handleEditBooking}
-        onDelete={handleDeleteBooking}
-      />
 
       {/* Button zum Hinzufügen einer neuen Buchung */}
       <button
@@ -123,9 +92,15 @@ export default function BookingsPage() {
       </button>
 
       {/* Modal für das Formular */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-          <BookingForm booking={selectedBooking as Booking} onSave={handleSaveBooking} onDelete={handleDeleteBooking} />
-      </Modal>
+      {isModalOpen && (
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <BookingForm
+            booking={selectedBooking || ({} as Booking)}
+            onSave={handleSaveBooking}
+            onDelete={selectedBooking?.id ? handleDeleteBooking : undefined}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
