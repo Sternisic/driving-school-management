@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,11 +7,17 @@ const prisma = new PrismaClient();
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
+
     const data = await req.json();
 
     // Vorherige Buchung laden, um lessonType-Änderungen zu erkennen
     const existingBooking = await prisma.booking.findUnique({ where: { id } });
-    if (!existingBooking) throw new Error("Buchung nicht gefunden");
+    if (!existingBooking) {
+      return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
+    }
 
     const updatedBooking = await prisma.booking.update({
       where: { id },
@@ -27,12 +33,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       },
     });
 
-    // Wenn sich der lessonType ändert, entsprechend die Fahrstunden anpassen
+    // Fahrstunden anpassen, wenn sich der lessonType ändert
     if (existingBooking.lessonType !== data.lessonType) {
       if (existingBooking.lessonType === "NORMAL") {
         await prisma.student.update({
           where: { id: parseInt(data.studentId, 10) },
-          data: { lessons: { decrement: 1 } }, // Fahrstunde zurücksetzen
+          data: { lessons: { decrement: 1 } },
         });
       } else if (data.lessonType === "NORMAL") {
         await prisma.student.update({
@@ -41,8 +47,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         });
       }
 
-      // Spezialfahrten aktualisieren, wenn nicht "NORMAL"
-      const specialTripsUpdate: any = {};
+      // Spezialfahrten aktualisieren
+      const specialTripsUpdate: Partial<{ landstrasse: boolean; autobahn: boolean; daemmerung: boolean }> =
+        {};
       if (data.lessonType === "LANDSTRASSE") {
         specialTripsUpdate.landstrasse = true;
       } else if (data.lessonType === "AUTOBAHN") {
@@ -50,7 +57,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       } else if (data.lessonType === "DAEMMERUNG") {
         specialTripsUpdate.daemmerung = true;
       }
-      
+
       await prisma.student.update({
         where: { id: parseInt(data.studentId, 10) },
         data: { specialTrips: { ...specialTripsUpdate } },
@@ -60,22 +67,26 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json(updatedBooking);
   } catch (error) {
     console.error("Fehler beim Aktualisieren der Buchung:", error);
-    return NextResponse.json({ error: "Fehler beim Aktualisieren der Buchung" }, { status: 500 });
+    return NextResponse.json({ error: "Interner Serverfehler" }, { status: 500 });
   }
 }
 
 // DELETE: Buchung löschen
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
-    const bookingId = Number(params.id);
-    if (!bookingId) return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
 
     // Bestehende Buchung laden, um lessonType zu prüfen
-    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-    if (!booking) throw new Error("Buchung nicht gefunden");
+    const booking = await prisma.booking.findUnique({ where: { id } });
+    if (!booking) {
+      return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
+    }
 
     // Buchung löschen
-    await prisma.booking.delete({ where: { id: bookingId } });
+    await prisma.booking.delete({ where: { id } });
 
     // Fahrstunden nur verringern, wenn es sich um eine normale Fahrstunde handelt
     if (booking.lessonType === "NORMAL") {
@@ -88,6 +99,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ message: "Buchung erfolgreich gelöscht" });
   } catch (error) {
     console.error("Fehler beim Löschen der Buchung:", error);
-    return NextResponse.json({ error: "Fehler beim Löschen der Buchung" }, { status: 500 });
+    return NextResponse.json({ error: "Interner Serverfehler" }, { status: 500 });
   }
 }
