@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // PUT: Bestehende Buchung aktualisieren
 export async function PUT(
   req: Request,
-  context: { params: Record<string, string> }
+  context: { params: { id: string } }
 ) {
   try {
     const id = parseInt(context.params.id, 10);
@@ -51,8 +51,11 @@ export async function PUT(
       }
 
       // Spezialfahrten aktualisieren
-      const specialTripsUpdate: Partial<{ landstrasse: boolean; autobahn: boolean; daemmerung: boolean }> =
-        {};
+      const specialTripsUpdate: Partial<{
+        landstrasse: boolean;
+        autobahn: boolean;
+        daemmerung: boolean;
+      }> = {};
       if (data.lessonType === "LANDSTRASSE") {
         specialTripsUpdate.landstrasse = true;
       } else if (data.lessonType === "AUTOBAHN") {
@@ -75,9 +78,12 @@ export async function PUT(
 }
 
 // DELETE: Buchung löschen
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: Request,
+  context: { params: { id: string } }
+) {
   try {
-    const id = parseInt(params.id, 10);
+    const id = parseInt(context.params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
@@ -102,6 +108,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ message: "Buchung erfolgreich gelöscht" });
   } catch (error) {
     console.error("Fehler beim Löschen der Buchung:", error);
-    return NextResponse.json({ error: "Interner Serverfehler" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Interner Serverfehler" },
+      { status: 500 }
+    );
   }
 }
