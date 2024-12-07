@@ -4,9 +4,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // PUT: Bestehende Buchung aktualisieren
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: Request,
+  context: { params: Record<string, string> }
+) {
   try {
-    const id = parseInt(params.id, 10);
+    const id = parseInt(context.params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
