@@ -87,24 +87,25 @@ export async function PUT(
 
 // DELETE: Buchung löschen
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ID validieren
-    const id = parseInt(params.id, 10);
-    if (isNaN(id)) {
+    const { id } = await params;
+    const bookingId = parseInt(id, 10);
+
+    if (isNaN(bookingId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
-    // Bestehende Buchung laden
-    const booking = await prisma.booking.findUnique({ where: { id } });
+    // Bestehende Buchung prüfen
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
     if (!booking) {
       return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
     }
 
     // Buchung löschen
-    await prisma.booking.delete({ where: { id } });
+    await prisma.booking.delete({ where: { id: bookingId } });
 
     // Fahrstunden anpassen, falls es sich um eine normale Fahrstunde handelt
     if (booking.lessonType === "NORMAL") {
