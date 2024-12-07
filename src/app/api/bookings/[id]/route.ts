@@ -5,28 +5,28 @@ const prisma = new PrismaClient();
 
 // PUT: Bestehende Buchung aktualisieren
 export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ID validieren
-    const id = parseInt(params.id, 10);
-    if (isNaN(id)) {
+    const { id } = await params;
+    const bookingId = parseInt(id, 10);
+    if (isNaN(bookingId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
     // Daten aus der Anfrage parsen
-    const data = await req.json();
+    const data = await request.json();
 
     // Existierende Buchung prüfen
-    const existingBooking = await prisma.booking.findUnique({ where: { id } });
+    const existingBooking = await prisma.booking.findUnique({ where: { id: bookingId } });
     if (!existingBooking) {
       return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
     }
 
     // Buchung aktualisieren
     const updatedBooking = await prisma.booking.update({
-      where: { id },
+      where: { id: bookingId },
       data: {
         start: new Date(data.start),
         end: new Date(data.end),
