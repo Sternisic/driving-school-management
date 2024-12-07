@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-export async function GET(req: Request, { params }: { params: { fileName: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ fileName: string }> }
+) {
   try {
-    const { fileName } = params;
+    const { fileName } = await params;
 
     // Pfad zur gespeicherten Datei
     const filePath = path.join(
@@ -15,20 +18,30 @@ export async function GET(req: Request, { params }: { params: { fileName: string
       fileName
     );
 
+    // Prüfen, ob die Datei existiert
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "Datei nicht gefunden." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Datei nicht gefunden." },
+        { status: 404 }
+      );
     }
 
+    // Datei lesen
     const file = fs.readFileSync(filePath);
 
+    // Datei zurückgeben
     return new Response(file, {
       headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
     console.error("Fehler beim Abrufen der Datei:", error);
-    return NextResponse.json({ error: "Fehler beim Abrufen der Datei" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Fehler beim Abrufen der Datei" },
+      { status: 500 }
+    );
   }
 }
