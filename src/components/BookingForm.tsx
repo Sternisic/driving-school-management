@@ -1,8 +1,10 @@
-// pages/BookingForm.tsx
 'use client';
 
 import { useState, useEffect } from "react";
-import { Student, Instructor, Car, Booking } from "@/types";
+import { Student } from "@/types/Student";
+import { Instructor } from "@/types/Instructor";
+import { Car } from "@/types/Car";
+import { Booking } from "@/types/Booking";
 import { getStudents } from "@/services/studentService";
 import { getInstructors } from "@/services/instructorService";
 import { getCars } from "@/services/carService";
@@ -14,7 +16,6 @@ import BookingStudentSelector from "@/components/BookingStudentSelector";
 import BookingTimeSelector from "@/components/BookingTimeSelector";
 
 import moment from "moment-timezone";
-
 
 interface BookingFormProps {
   booking: Partial<Booking>;
@@ -73,7 +74,7 @@ export default function BookingForm({
       if (type.value === "DAEMMERUNG" && student.specialTrips.daemmerung) return false;
     }
     return true;
-  });
+  }) as { value: "NORMAL" | "LANDSTRASSE" | "AUTOBAHN" | "DAEMMERUNG"; label: string }[];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +89,33 @@ export default function BookingForm({
     };
     fetchData();
   }, []);
+
+  const handleAddLessonToRecord = async (student: Student, lessonData: Partial<Booking>) => {
+    try {
+      const response = await fetch(`/api/add-lesson-to-record`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lastName: student.lastName,
+          firstName: student.firstName,
+          lessonDate: lessonData.start ? moment(lessonData.start).format("DD.MM.YYYY") : "",
+          lessonType: lessonData.lessonType || "NORMAL",
+          startTime: lessonData.start ? moment(lessonData.start).format("HH:mm") : "",
+          minutes: lessonData.end && lessonData.start
+            ? moment(lessonData.end).diff(moment(lessonData.start), "minutes")
+            : 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      console.log("Fahrstunde erfolgreich in den Ausbildungsnachweis eingetragen!");
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Ausbildungsnachweises:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +149,12 @@ export default function BookingForm({
     };
 
     await onSave(newBooking);
+
+    const student = students.find((s) => s.id === Number(selectedStudent));
+    if (student) {
+      await handleAddLessonToRecord(student, newBooking);
+    }
+
     if (onBookingSaved) onBookingSaved();
   };
 
@@ -175,14 +209,14 @@ export default function BookingForm({
           {booking?.id ? "Überschreiben" : "Buchen"}
         </button>
         {onDelete && booking?.id && (
-          <button
-            type="button"
-            onClick={() => onDelete(booking.id)}
-            className="bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 focus:outline-none focus:shadow-outline"
-          >
-            Löschen
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => onDelete(booking.id!)} // Non-null assertion, da `id` hier sicher definiert ist
+          className="bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 focus:outline-none focus:shadow-outline"
+        >
+          Löschen
+        </button>
+      )}
       </div>
     </form>
   );

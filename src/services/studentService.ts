@@ -23,3 +23,9 @@ export const deleteStudent = async (id: number) => {
   const response = await axios.delete(`/api/students/${id}`);
   return response.data;
 };
+
+// Einzelnen Schüler abrufen (GET)
+export const getStudent = async (id: number) => {
+  const response = await axios.get(`/api/students/${id}`);
+  return response.data;
+};

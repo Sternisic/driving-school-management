@@ -7,6 +7,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+}
+
+
 enum SpecialTrips {
   LANDSTRASSE
   AUTOBAHN
@@ -21,31 +28,30 @@ enum LessonType {
 }
 
 model Student {
-  id              Int       @id @default(autoincrement())
-  firstName       String
-  lastName        String
-  phone           String
-  email           String
-  gearType        String
-  address         String
-  postalCode      String?   // Vorübergehend optional
-  birthDate       DateTime? // Vorübergehend optional
-  birthPlace      String?   // Vorübergehend optional
-  nationality     String?   // Vorübergehend optional
-  occupation      String?   // Vorübergehend optional
-  lessons         Int       @default(0)  // Anzahl der normalen Fahrstunden
-  specialTrips    Json      @default("{}")  // Spezielle Fahrten (Landstraße, Autobahn, Dämmerung)
-  bookings        Booking[] // Ein Student kann mehrere Buchungen haben
+  id           Int          @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String
+  gearType     String
+  address      String
+  postalCode   String?
+  birthDate    DateTime?
+  birthPlace   String?
+  nationality  String?
+  occupation   String?
+  lessons      Int          @default(0)
+  specialTrips Json         @default("{}")
+  bookings     Booking[]
+  attendances  Attendance[] // Rückbeziehung zur Attendance-Tabelle
 }
-
 
 model Instructor {
   id        Int       @id @default(autoincrement())
   firstName String
   lastName  String
   phone     String
-  // Rückbeziehung zur Buchung
-  bookings  Booking[] // Ein Instructor kann mehrere Buchungen haben
+  bookings  Booking[] // Rückbeziehung zur Buchung
 }
 
 model Car {
@@ -53,22 +59,31 @@ model Car {
   brand        String
   model        String
   licensePlate String
-  gearType     String  // Schaltgetriebe oder Automatik
-  // Rückbeziehung zur Buchung
-  bookings     Booking[] // Ein Auto kann mehrere Buchungen haben
+  gearType     String
+  bookings     Booking[] // Rückbeziehung zur Buchung
 }
 
 model Booking {
-  id           Int         @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   start        DateTime
   end          DateTime
-  student      Student     @relation(fields: [studentId], references: [id])
+  student      Student    @relation(fields: [studentId], references: [id])
   studentId    Int
-  instructor   Instructor  @relation(fields: [instructorId], references: [id])
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
   instructorId Int
-  car          Car         @relation(fields: [carId], references: [id])
+  car          Car        @relation(fields: [carId], references: [id])
   carId        Int
-  description  String?     // Optionales Feld für eine Beschreibung oder Notiz
-  lessonType   LessonType  // Art der Fahrstunde (Normal oder spezielle Fahrt)
-  paid         Boolean     @default(false) // Neues Feld für den Bezahlstatus
+  description  String?
+  lessonType   LessonType
+  paid         Boolean    @default(false)
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  studentId  Int
+  attendedAt DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId]) // Ein Schüler kann nur einmal pro Session eingecheckt sein
 }

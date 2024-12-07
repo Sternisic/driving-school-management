@@ -3,6 +3,30 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Schülerdaten abrufen (GET)
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const studentId = Number(params.id);
+
+    if (!studentId) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!student) {
+      return NextResponse.json({ error: "Schüler nicht gefunden" }, { status: 404 });
+    }
+
+    return NextResponse.json(student);
+  } catch (error) {
+    console.error("Fehler beim Abrufen des Schülers:", error);
+    return NextResponse.json({ error: "Fehler beim Abrufen des Schülers" }, { status: 500 });
+  }
+}
+
 // DELETE: Schüler löschen
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -12,7 +36,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
-    // Schüler löschen
     const deletedStudent = await prisma.student.delete({
       where: { id: studentId },
     });
@@ -28,7 +51,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const studentId = Number(params.id);
-    const data = await req.json(); // Schülerdaten aus dem Request-Body
+    const data = await req.json();
 
     const updatedStudent = await prisma.student.update({
       where: { id: studentId },
@@ -39,8 +62,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         email: data.email,
         gearType: data.gearType,
         address: data.address,
-        postalCode: data.postalCode, // Neue Felder
-        birthDate: new Date(data.birthDate), // Datum in Date-Objekt umwandeln
+        postalCode: data.postalCode,
+        birthDate: new Date(data.birthDate),
         birthPlace: data.birthPlace,
         nationality: data.nationality,
         occupation: data.occupation,

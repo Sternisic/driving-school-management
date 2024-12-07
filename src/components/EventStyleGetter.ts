@@ -1,3 +1,4 @@
+import { Booking } from "@/types/Booking";
 import { Instructor } from "@/types/Instructor";
 
 // Farben für die Fahrlehrer

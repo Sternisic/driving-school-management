@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Student } from "@/types/Student";
 import Select from "react-select";
+import parsePhoneNumber, {
+  parsePhoneNumberFromString,
+} from "libphonenumber-js";
 import CountryFlag from "react-country-flag";
 import countries from "i18n-iso-countries";
 
@@ -14,6 +17,24 @@ interface StudentFormProps {
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
+
+  // Formatierung: yyyy-mm-dd -> tt.mm.jjjj
+  const formatDateToDisplay = (date: string) => {
+    if (!date) return "";
+    const d = new Date(date); // Erstelle ein Date-Objekt
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
+
+  // Formatierung: tt.mm.jjjj -> yyyy-mm-dd
+  const formatDateToDatabase = (date: string) => {
+    if (!date) return "";
+    const [day, month, year] = date.split(".");
+    return `${year}-${month}-${day}`;
+  };
+
   const [firstName, setFirstName] = useState(student?.firstName || "");
   const [lastName, setLastName] = useState(student?.lastName || "");
   const [phone, setPhone] = useState(student?.phone || "");
@@ -23,7 +44,9 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
   );
   const [address, setAddress] = useState(student?.address || "");
   const [postalCode, setPostalCode] = useState(student?.postalCode || "");
-  const [birthDate, setBirthDate] = useState(student?.birthDate || "");
+  const [birthDate, setBirthDate] = useState(
+    student?.birthDate ? formatDateToDisplay(student.birthDate) : ""
+  );
   const [birthPlace, setBirthPlace] = useState(student?.birthPlace || "");
   const [nationality, setNationality] = useState(student?.nationality || "");
   const [occupation, setOccupation] = useState(student?.occupation || "");
@@ -42,7 +65,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
     setGearType(student?.gearType || "Schaltgetriebe");
     setAddress(student?.address || "");
     setPostalCode(student?.postalCode || "");
-    setBirthDate(student?.birthDate || "");
+    setBirthDate(student?.birthDate ? formatDateToDisplay(student.birthDate) : "");
     setBirthPlace(student?.birthPlace || "");
     setNationality(student?.nationality || "");
     setOccupation(student?.occupation || "");
@@ -53,6 +76,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
       daemmerung: student?.specialTrips?.daemmerung || false,
     });
   }, [student]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,13 +89,29 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
       gearType,
       address,
       postalCode,
-      birthDate,
+      birthDate: formatDateToDatabase(birthDate), // Umwandlung ins Datenbankformat
       birthPlace,
       nationality,
       occupation,
       lessons,
       specialTrips,
     });
+  };
+
+  // Funktion zum Formatieren der Telefonnummer
+  const formatPhoneNumber = (input: string) => {
+    try {
+      const phoneNumber = parsePhoneNumberFromString(input, "DE"); // Standard: Deutschland
+      return phoneNumber ? phoneNumber.formatInternational() : input;
+    } catch {
+      return input; // Ungültige Nummer, Eingabe nicht ändern
+    }
+  };
+
+  // Funktion zum Verarbeiten der Eingabe
+  const handlePhoneChange = (input: string) => {
+    const formattedPhone = formatPhoneNumber(input);
+    setPhone(formattedPhone);
   };
 
   // Erstelle eine Liste von Ländern für das Dropdown und sortiere Deutschland und Türkei zuerst
@@ -105,14 +145,13 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
               svg
               style={{ marginRight: "8px" }}
             />
-            {countries.getName(countryCode, "de")}{" "}
-            {/* Ländername auf Deutsch */}
+            {countries.getName(countryCode, "de")}
           </div>
         ),
       }))
       .sort((a, b) =>
         a.label.props.children[1].localeCompare(b.label.props.children[1])
-      ), // Alphabetisch sortieren
+      ),
   ];
 
   return (
@@ -154,8 +193,9 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
           <input
             type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => handlePhoneChange(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="+49 123 4567890"
             required
           />
         </div>
@@ -205,13 +245,15 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onSave }) => {
       <div className="mb-4 flex space-x-4">
         <div className="flex-1">
           <label className="block text-black text-sm font-bold mb-2">
-            Geburtsdatum
+            Geburtsdatum (tt.mm.jjjj)
           </label>
           <input
-            type="date"
+            type="text"
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="tt.mm.jjjj"
+            pattern="\d{2}\.\d{2}\.\d{4}" // Validierung für tt.mm.jjjj
             required
           />
         </div>
