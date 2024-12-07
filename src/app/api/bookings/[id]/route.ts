@@ -6,10 +6,10 @@ const prisma = new PrismaClient();
 // PUT: Bestehende Buchung aktualisieren
 export async function PUT(
   req: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } } // Korrekte Typisierung des Kontextes
 ) {
   try {
-    const id = parseInt(context.params.id, 10);
+    const id = parseInt(params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
