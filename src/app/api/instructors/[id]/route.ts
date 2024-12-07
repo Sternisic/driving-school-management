@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -18,7 +18,7 @@ async function validateBooking(data: any) {
   });
 
   if (overlappingInstructorBooking) {
-    return 'Der Fahrlehrer hat bereits eine Buchung zur gleichen Zeit.';
+    return "Der Fahrlehrer hat bereits eine Buchung zur gleichen Zeit.";
   }
 
   const overlappingCarBooking = await prisma.booking.findFirst({
@@ -34,7 +34,7 @@ async function validateBooking(data: any) {
   });
 
   if (overlappingCarBooking) {
-    return 'Das Auto ist bereits zu dieser Zeit in Verwendung.';
+    return "Das Auto ist bereits zu dieser Zeit in Verwendung.";
   }
 
   const overlappingStudentBooking = await prisma.booking.findFirst({
@@ -50,14 +50,14 @@ async function validateBooking(data: any) {
   });
 
   if (overlappingStudentBooking) {
-    return 'Der Fahrschüler hat bereits eine Buchung zur gleichen Zeit.';
+    return "Der Fahrschüler hat bereits eine Buchung zur gleichen Zeit.";
   }
 
   return null;
 }
 
 // POST: Neue Buchung hinzufügen
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
@@ -79,16 +79,28 @@ export async function POST(req: Request) {
 
     return NextResponse.json(newBooking);
   } catch (error) {
-    console.error('Fehler beim Hinzufügen der Buchung:', error);
-    return NextResponse.json({ error: 'Fehler beim Hinzufügen der Buchung' }, { status: 500 });
+    console.error("Fehler beim Hinzufügen der Buchung:", error);
+    return NextResponse.json(
+      { error: "Fehler beim Hinzufügen der Buchung" },
+      { status: 500 }
+    );
   }
 }
 
 // PUT: Bestehende Buchung aktualisieren
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
+    const bookingId = parseInt(id, 10);
+
+    if (isNaN(bookingId)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
+
     const data = await req.json();
-    const id = parseInt(params.id, 10);
 
     const validationError = await validateBooking(data);
     if (validationError) {
@@ -96,7 +108,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updatedBooking = await prisma.booking.update({
-      where: { id },
+      where: { id: bookingId },
       data: {
         start: new Date(data.start),
         end: new Date(data.end),
@@ -109,23 +121,37 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json(updatedBooking);
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Buchung:', error);
-    return NextResponse.json({ error: 'Fehler beim Aktualisieren der Buchung' }, { status: 500 });
+    console.error("Fehler beim Aktualisieren der Buchung:", error);
+    return NextResponse.json(
+      { error: "Fehler beim Aktualisieren der Buchung" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE: Buchung anhand der ID löschen
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const id = parseInt(params.id, 10); // ID aus den URL-Parametern extrahieren
+    const { id } = await params;
+    const bookingId = parseInt(id, 10);
+
+    if (isNaN(bookingId)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
 
     const deletedBooking = await prisma.booking.delete({
-      where: { id },
+      where: { id: bookingId },
     });
 
     return NextResponse.json(deletedBooking);
   } catch (error) {
-    console.error('Fehler beim Löschen der Buchung:', error);
-    return NextResponse.json({ error: 'Fehler beim Löschen der Buchung' }, { status: 500 });
+    console.error("Fehler beim Löschen der Buchung:", error);
+    return NextResponse.json(
+      { error: "Fehler beim Löschen der Buchung" },
+      { status: 500 }
+    );
   }
 }
