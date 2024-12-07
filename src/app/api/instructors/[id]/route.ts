@@ -3,154 +3,96 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Überprüfe, ob es Überschneidungen gibt
-async function validateBooking(data: any) {
-  const overlappingInstructorBooking = await prisma.booking.findFirst({
-    where: {
-      instructorId: data.instructorId,
-      OR: [
-        {
-          start: { lte: new Date(data.end) },
-          end: { gte: new Date(data.start) },
-        },
-      ],
-    },
-  });
-
-  if (overlappingInstructorBooking) {
-    return "Der Fahrlehrer hat bereits eine Buchung zur gleichen Zeit.";
-  }
-
-  const overlappingCarBooking = await prisma.booking.findFirst({
-    where: {
-      carId: data.carId,
-      OR: [
-        {
-          start: { lte: new Date(data.end) },
-          end: { gte: new Date(data.start) },
-        },
-      ],
-    },
-  });
-
-  if (overlappingCarBooking) {
-    return "Das Auto ist bereits zu dieser Zeit in Verwendung.";
-  }
-
-  const overlappingStudentBooking = await prisma.booking.findFirst({
-    where: {
-      studentId: data.studentId,
-      OR: [
-        {
-          start: { lte: new Date(data.end) },
-          end: { gte: new Date(data.start) },
-        },
-      ],
-    },
-  });
-
-  if (overlappingStudentBooking) {
-    return "Der Fahrschüler hat bereits eine Buchung zur gleichen Zeit.";
-  }
-
-  return null;
-}
-
-// POST: Neue Buchung hinzufügen
-export async function POST(req: NextRequest) {
+// Instruktor-Daten abrufen (GET)
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const data = await req.json();
+    const { id } = await params;
+    const instructorId = parseInt(id, 10);
 
-    const validationError = await validateBooking(data);
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
+    if (isNaN(instructorId)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
-    const newBooking = await prisma.booking.create({
-      data: {
-        start: new Date(data.start),
-        end: new Date(data.end),
-        studentId: parseInt(data.studentId, 10),
-        instructorId: parseInt(data.instructorId, 10),
-        carId: parseInt(data.carId, 10),
-        description: data.description || null,
-      },
+    const instructor = await prisma.instructor.findUnique({
+      where: { id: instructorId },
     });
 
-    return NextResponse.json(newBooking);
+    if (!instructor) {
+      return NextResponse.json(
+        { error: "Fahrlehrer nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(instructor);
   } catch (error) {
-    console.error("Fehler beim Hinzufügen der Buchung:", error);
+    console.error("Fehler beim Abrufen des Fahrlehrers:", error);
     return NextResponse.json(
-      { error: "Fehler beim Hinzufügen der Buchung" },
+      { error: "Fehler beim Abrufen des Fahrlehrers" },
       { status: 500 }
     );
   }
 }
 
-// PUT: Bestehende Buchung aktualisieren
+// Fahrlehrer-Daten aktualisieren (PUT)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const bookingId = parseInt(id, 10);
+    const instructorId = parseInt(id, 10);
 
-    if (isNaN(bookingId)) {
+    if (isNaN(instructorId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
     const data = await req.json();
 
-    const validationError = await validateBooking(data);
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
-    }
-
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
+    const updatedInstructor = await prisma.instructor.update({
+      where: { id: instructorId },
       data: {
-        start: new Date(data.start),
-        end: new Date(data.end),
-        studentId: parseInt(data.studentId, 10),
-        instructorId: parseInt(data.instructorId, 10),
-        carId: parseInt(data.carId, 10),
-        description: data.description || null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
       },
     });
 
-    return NextResponse.json(updatedBooking);
+    return NextResponse.json(updatedInstructor);
   } catch (error) {
-    console.error("Fehler beim Aktualisieren der Buchung:", error);
+    console.error("Fehler beim Bearbeiten des Fahrlehrers:", error);
     return NextResponse.json(
-      { error: "Fehler beim Aktualisieren der Buchung" },
+      { error: "Fehler beim Bearbeiten des Fahrlehrers" },
       { status: 500 }
     );
   }
 }
 
-// DELETE: Buchung anhand der ID löschen
+// Fahrlehrer löschen (DELETE)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const bookingId = parseInt(id, 10);
+    const instructorId = parseInt(id, 10);
 
-    if (isNaN(bookingId)) {
+    if (isNaN(instructorId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
-    const deletedBooking = await prisma.booking.delete({
-      where: { id: bookingId },
+    const deletedInstructor = await prisma.instructor.delete({
+      where: { id: instructorId },
     });
 
-    return NextResponse.json(deletedBooking);
+    return NextResponse.json(deletedInstructor);
   } catch (error) {
-    console.error("Fehler beim Löschen der Buchung:", error);
+    console.error("Fehler beim Löschen des Fahrlehrers:", error);
     return NextResponse.json(
-      { error: "Fehler beim Löschen der Buchung" },
+      { error: "Fehler beim Löschen des Fahrlehrers" },
       { status: 500 }
     );
   }
