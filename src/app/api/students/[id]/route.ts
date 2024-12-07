@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // Schülerdaten abrufen (GET)
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const studentId = Number(params.id);
+    const { id } = await params;
+    const studentId = parseInt(id, 10);
 
-    if (!studentId) {
+    if (isNaN(studentId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
@@ -17,22 +21,32 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     });
 
     if (!student) {
-      return NextResponse.json({ error: "Schüler nicht gefunden" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Schüler nicht gefunden" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(student);
   } catch (error) {
     console.error("Fehler beim Abrufen des Schülers:", error);
-    return NextResponse.json({ error: "Fehler beim Abrufen des Schülers" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Fehler beim Abrufen des Schülers" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE: Schüler löschen
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const studentId = Number(params.id);
+    const { id } = await params;
+    const studentId = parseInt(id, 10);
 
-    if (!studentId) {
+    if (isNaN(studentId)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
@@ -43,14 +57,26 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json(deletedStudent);
   } catch (error) {
     console.error("Fehler beim Löschen des Schülers:", error);
-    return NextResponse.json({ error: "Fehler beim Löschen des Schülers" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Fehler beim Löschen des Schülers" },
+      { status: 500 }
+    );
   }
 }
 
 // PUT: Schüler aktualisieren
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const studentId = Number(params.id);
+    const { id } = await params;
+    const studentId = parseInt(id, 10);
+
+    if (isNaN(studentId)) {
+      return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
+    }
+
     const data = await req.json();
 
     const updatedStudent = await prisma.student.update({
@@ -63,18 +89,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         gearType: data.gearType,
         address: data.address,
         postalCode: data.postalCode,
-        birthDate: new Date(data.birthDate),
+        birthDate: data.birthDate ? new Date(data.birthDate) : null,
         birthPlace: data.birthPlace,
         nationality: data.nationality,
         occupation: data.occupation,
-        lessons: data.lessons,
-        specialTrips: data.specialTrips,
+        lessons: data.lessons || 0,
+        specialTrips: data.specialTrips || {},
       },
     });
 
     return NextResponse.json(updatedStudent);
   } catch (error) {
-    console.error('Fehler beim Bearbeiten des Schülers:', error);
-    return NextResponse.json({ error: 'Fehler beim Bearbeiten des Schülers' }, { status: 500 });
+    console.error("Fehler beim Bearbeiten des Schülers:", error);
+    return NextResponse.json(
+      { error: "Fehler beim Bearbeiten des Schülers" },
+      { status: 500 }
+    );
   }
 }
