@@ -1,27 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // PUT: Bestehende Buchung aktualisieren
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } } // Korrekte Typisierung des Kontextes
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
+    // ID validieren
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
+    // Daten aus der Anfrage parsen
     const data = await req.json();
 
-    // Vorherige Buchung laden, um lessonType-Änderungen zu erkennen
+    // Existierende Buchung prüfen
     const existingBooking = await prisma.booking.findUnique({ where: { id } });
     if (!existingBooking) {
       return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
     }
 
+    // Buchung aktualisieren
     const updatedBooking = await prisma.booking.update({
       where: { id },
       data: {
@@ -36,16 +39,18 @@ export async function PUT(
       },
     });
 
-    // Fahrstunden anpassen, wenn sich der lessonType ändert
+    // Anpassung der Fahrstunden, falls der lessonType geändert wurde
     if (existingBooking.lessonType !== data.lessonType) {
+      const studentId = parseInt(data.studentId, 10);
+
       if (existingBooking.lessonType === "NORMAL") {
         await prisma.student.update({
-          where: { id: parseInt(data.studentId, 10) },
+          where: { id: studentId },
           data: { lessons: { decrement: 1 } },
         });
       } else if (data.lessonType === "NORMAL") {
         await prisma.student.update({
-          where: { id: parseInt(data.studentId, 10) },
+          where: { id: studentId },
           data: { lessons: { increment: 1 } },
         });
       }
@@ -65,30 +70,34 @@ export async function PUT(
       }
 
       await prisma.student.update({
-        where: { id: parseInt(data.studentId, 10) },
+        where: { id: studentId },
         data: { specialTrips: { ...specialTripsUpdate } },
       });
     }
 
-    return NextResponse.json(updatedBooking);
+    return NextResponse.json(updatedBooking, { status: 200 });
   } catch (error) {
     console.error("Fehler beim Aktualisieren der Buchung:", error);
-    return NextResponse.json({ error: "Interner Serverfehler" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Interner Serverfehler beim Aktualisieren der Buchung" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE: Buchung löschen
 export async function DELETE(
-  req: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(context.params.id, 10);
+    // ID validieren
+    const id = parseInt(params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json({ error: "Ungültige ID" }, { status: 400 });
     }
 
-    // Bestehende Buchung laden, um lessonType zu prüfen
+    // Bestehende Buchung laden
     const booking = await prisma.booking.findUnique({ where: { id } });
     if (!booking) {
       return NextResponse.json({ error: "Buchung nicht gefunden" }, { status: 404 });
@@ -97,7 +106,7 @@ export async function DELETE(
     // Buchung löschen
     await prisma.booking.delete({ where: { id } });
 
-    // Fahrstunden nur verringern, wenn es sich um eine normale Fahrstunde handelt
+    // Fahrstunden anpassen, falls es sich um eine normale Fahrstunde handelt
     if (booking.lessonType === "NORMAL") {
       await prisma.student.update({
         where: { id: booking.studentId },
@@ -105,11 +114,14 @@ export async function DELETE(
       });
     }
 
-    return NextResponse.json({ message: "Buchung erfolgreich gelöscht" });
+    return NextResponse.json(
+      { message: "Buchung erfolgreich gelöscht" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Fehler beim Löschen der Buchung:", error);
     return NextResponse.json(
-      { error: "Interner Serverfehler" },
+      { error: "Interner Serverfehler beim Löschen der Buchung" },
       { status: 500 }
     );
   }
