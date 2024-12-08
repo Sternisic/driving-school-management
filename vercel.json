@@ -1,6 +1,10 @@
 {
-  "version": 2,
-  "env": {
-    "DATABASE_URL": "@DATABASE_URL"
+    "version": 2,
+    "build": {
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:root@localhost:5432/driving_school_db?schema=public"
+      }
+    },
+    "buildCommand": "prisma generate && next build"
   }
-}
+  
