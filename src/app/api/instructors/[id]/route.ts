@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Instruktor-Daten abrufen (GET)
+// Instruktordaten abrufen (GET)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

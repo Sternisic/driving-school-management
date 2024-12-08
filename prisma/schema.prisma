@@ -1,10 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
@@ -13,6 +13,66 @@ model User {
   password String
 }
 
+model Student {
+  id           Int          @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String
+  gearType     String
+  address      String
+  lessons      Int          @default(0)
+  specialTrips Json         @default("{}")
+  birthDate    DateTime?
+  birthPlace   String?
+  nationality  String?
+  occupation   String?
+  postalCode   String?
+  attendances  Attendance[]
+  bookings     Booking[]
+}
+
+model Instructor {
+  id        Int       @id @default(autoincrement())
+  firstName String
+  lastName  String
+  phone     String
+  bookings  Booking[]
+}
+
+model Car {
+  id           Int       @id @default(autoincrement())
+  model        String
+  gearType     String
+  brand        String
+  licensePlate String
+  bookings     Booking[]
+}
+
+model Booking {
+  id           Int        @id @default(autoincrement())
+  start        DateTime
+  end          DateTime
+  studentId    Int
+  instructorId Int
+  carId        Int
+  description  String?
+  lessonType   LessonType
+  paid         Boolean    @default(false)
+  car          Car        @relation(fields: [carId], references: [id])
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  student      Student    @relation(fields: [studentId], references: [id])
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  studentId  Int
+  attendedAt DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId])
+}
 
 enum SpecialTrips {
   LANDSTRASSE
@@ -25,65 +85,4 @@ enum LessonType {
   LANDSTRASSE
   AUTOBAHN
   DAEMMERUNG
-}
-
-model Student {
-  id           Int          @id @default(autoincrement())
-  firstName    String
-  lastName     String
-  phone        String
-  email        String
-  gearType     String
-  address      String
-  postalCode   String?
-  birthDate    DateTime?
-  birthPlace   String?
-  nationality  String?
-  occupation   String?
-  lessons      Int          @default(0)
-  specialTrips Json         @default("{}")
-  bookings     Booking[]
-  attendances  Attendance[] // Rückbeziehung zur Attendance-Tabelle
-}
-
-model Instructor {
-  id        Int       @id @default(autoincrement())
-  firstName String
-  lastName  String
-  phone     String
-  bookings  Booking[] // Rückbeziehung zur Buchung
-}
-
-model Car {
-  id           Int       @id @default(autoincrement())
-  brand        String
-  model        String
-  licensePlate String
-  gearType     String
-  bookings     Booking[] // Rückbeziehung zur Buchung
-}
-
-model Booking {
-  id           Int        @id @default(autoincrement())
-  start        DateTime
-  end          DateTime
-  student      Student    @relation(fields: [studentId], references: [id])
-  studentId    Int
-  instructor   Instructor @relation(fields: [instructorId], references: [id])
-  instructorId Int
-  car          Car        @relation(fields: [carId], references: [id])
-  carId        Int
-  description  String?
-  lessonType   LessonType
-  paid         Boolean    @default(false)
-}
-
-model Attendance {
-  id         Int      @id @default(autoincrement())
-  sessionId  Int
-  studentId  Int
-  attendedAt DateTime @default(now())
-  student    Student  @relation(fields: [studentId], references: [id])
-
-  @@unique([sessionId, studentId]) // Ein Schüler kann nur einmal pro Session eingecheckt sein
 }
