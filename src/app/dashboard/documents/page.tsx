@@ -6,32 +6,26 @@ import { Student } from "@/types/Student";
 import { getStudents } from "@/services/studentService";
 
 interface DocumentStatus {
-  contractExists: boolean;
-  recordExists: boolean;
+  contractURL: string | null;
+  recordURL: string | null;
 }
 
 const DocumentsPage = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [documentStatuses, setDocumentStatuses] = useState<Record<number, DocumentStatus>>({});
 
-  // Alle Schüler aus der Datenbank abrufen
+  // Schüler aus der Datenbank abrufen
   const fetchStudents = async () => {
     try {
       const studentsData = await getStudents();
       setStudents(studentsData);
 
-      // Initiale Dokumenten-Status für jeden Schüler prüfen
+      // Initiale Dokumenten-Status setzen
       const statuses: Record<number, DocumentStatus> = {};
       for (const student of studentsData) {
-        if (!student.id) continue;
-
-        const contractFileName = `${student.lastName}_${student.firstName}_Ausbildungsvertrag.xlsx`;
-        const recordFileName = `${student.lastName}_${student.firstName}_Ausbildungsnachweis.xlsx`;
-
-        const contractExists = await fileExists(`/assets/generated/Ausbildungsvertrag/${contractFileName}`);
-        const recordExists = await fileExists(`/assets/generated/Ausbildungsnachweis/${recordFileName}`);
-
-        statuses[student.id] = { contractExists, recordExists };
+        if (student.id) {
+          statuses[student.id] = { contractURL: null, recordURL: null };
+        }
       }
 
       setDocumentStatuses(statuses);
@@ -40,14 +34,8 @@ const DocumentsPage = () => {
     }
   };
 
-  // Hilfsfunktion zum Prüfen, ob eine Datei existiert
-  const fileExists = async (filePath: string): Promise<boolean> => {
-    const response = await fetch(filePath);
-    return response.ok;
-  };
-
-  // Ausbildungsvertrag erstellen
-  const handleGenerateContract = async (student: Student) => {
+  // Ausbildungsvertrag und Nachweis generieren
+  const handleGenerateDocuments = async (student: Student) => {
     if (!student.id) {
       console.error("Student hat keine gültige ID.");
       return;
@@ -57,38 +45,24 @@ const DocumentsPage = () => {
       const response = await fetch(`/api/generate-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lastName: student.lastName,
-          firstName: student.firstName,
-          address: student.address,
-          postalCode: student.postalCode,
-          birthDate: student.birthDate,
-          phone: student.phone,
-          email: student.email,
-          birthPlace: student.birthPlace,
-          nationality: student.nationality,
-          occupation: student.occupation,
-          currentDate: new Date().toLocaleDateString("de-DE"),
-        }),
+        body: JSON.stringify(student),
       });
 
       if (response.ok) {
+        const data = await response.json();
         const updatedStatuses = { ...documentStatuses };
 
-        // Initialisiere Status, falls er fehlt
-        if (student.id && !updatedStatuses[student.id]) {
-          updatedStatuses[student.id] = { contractExists: false, recordExists: false };
-        }
-
         if (student.id) {
-          updatedStatuses[student.id].contractExists = true;
-          updatedStatuses[student.id].recordExists = true; // Ausbildungsnachweis wird ebenfalls erstellt
+          updatedStatuses[student.id] = {
+            contractURL: data.contractURL,
+            recordURL: data.recordURL,
+          };
         }
 
         setDocumentStatuses(updatedStatuses);
       }
     } catch (error) {
-      console.error("Fehler beim Generieren des Ausbildungsvertrags:", error);
+      console.error("Fehler beim Generieren der Dokumente:", error);
     }
   };
 
@@ -114,9 +88,9 @@ const DocumentsPage = () => {
               <td className="p-2 border-t text-black text-sm">{student.firstName}</td>
               <td className="p-2 border-t text-black text-sm">{student.lastName}</td>
               <td className="p-2 border-t text-black text-sm">
-                {student.id && documentStatuses[student.id]?.contractExists ? (
+                {student.id && documentStatuses[student.id]?.contractURL ? (
                   <a
-                    href={`/assets/generated/Ausbildungsvertrag/${student.lastName}_${student.firstName}_Ausbildungsvertrag.xlsx`}
+                    ref={documentStatuses[student.id].contractURL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-600 hover:text-green-800 flex items-center"
@@ -127,17 +101,17 @@ const DocumentsPage = () => {
                 ) : (
                   <button
                     className="text-blue-600 hover:text-blue-800 flex items-center"
-                    onClick={() => handleGenerateContract(student)}
+                    onClick={() => handleGenerateDocuments(student)}
                   >
                     <FaPlus className="mr-1" />
-                    Erstellen
+                    Generieren
                   </button>
                 )}
               </td>
               <td className="p-2 border-t text-black text-sm">
-                {student.id && documentStatuses[student.id]?.recordExists ? (
+                {student.id && documentStatuses[student.id]?.recordURL ? (
                   <a
-                    href={`/assets/generated/Ausbildungsnachweis/${student.lastName}_${student.firstName}_Ausbildungsnachweis.xlsx`}
+                    ref={documentStatuses[student.id].recordURL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-600 hover:text-green-800 flex items-center"
