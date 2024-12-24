@@ -8,7 +8,7 @@ import { getStudent } from "@/services/studentService";
 export default function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const [id, setId] = useState<string | null>(null);
   const [student, setStudent] = useState<Student | null>(null);
-  const [contractExists, setContractExists] = useState<boolean>(false);
+  const [contractURL, setContractURL] = useState<string | null>(null);
   const router = useRouter();
 
   // Params auflösen und ID setzen
@@ -29,11 +29,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
         const studentData = await getStudent(Number(id));
         setStudent(studentData);
 
-        // Prüfen, ob der Vertrag existiert
+        // Überprüfe, ob der Vertrag bereits generiert wurde
         const fileName = `${studentData.lastName}_${studentData.firstName}_Ausbildungsvertrag.xlsx`;
-        const response = await fetch(`/assets/generated/Ausbildungsvertrag/${fileName}`);
-        if (response.ok) {
-          setContractExists(true);
+        const response = await fetch(`/api/check-file?fileName=${fileName}`);
+        const data = await response.json();
+
+        if (data.exists) {
+          setContractURL(data.url);
         }
       } catch (error) {
         console.error("Fehler beim Laden des Schülers oder Vertrags:", error);
@@ -45,6 +47,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
 
   const handleGenerateOrOpenContract = async () => {
     if (!student) return;
+
     try {
       const response = await fetch(`/api/generate-excel`, {
         method: "POST",
@@ -65,9 +68,9 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
       });
 
       const data = await response.json();
-      if (data.url) {
-        setContractExists(true);
-        window.open(data.url, "_blank");
+      if (data.contractURL) {
+        setContractURL(data.contractURL);
+        window.open(data.contractURL, "_blank");
       }
     } catch (error) {
       console.error("Fehler beim Generieren oder Öffnen des Vertrags:", error);
@@ -100,7 +103,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
           onClick={handleGenerateOrOpenContract}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {contractExists ? "Ausbildungsvertrag öffnen" : "Ausbildungsvertrag erstellen"}
+          {contractURL ? "Ausbildungsvertrag öffnen" : "Ausbildungsvertrag erstellen"}
         </button>
       </div>
     </div>
